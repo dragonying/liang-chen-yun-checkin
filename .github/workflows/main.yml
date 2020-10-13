@@ -1,0 +1,37 @@
+name: zfy-test
+
+on:
+  pull_request:
+  issue_comment:
+  push:
+  schedule:
+    - cron: "0 20 * * *"    # 每天早上4点执行
+    - cron: "0 23 * * *"    # 每天早上7点再次执行(预防出错)
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome:3.141.59
+        ports:
+          - 4444:4444
+        volumes:
+          - /dev/shm:/dev/shm
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Ubuntu version
+        run: |
+          cat /etc/issue
+          sudo lsb_release -a
+
+      - name: Install php dependencies
+        run: |
+          composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Checkin
+        run: |
+          sudo php ./run.php ${{ secrets.EMAIL }} ${{ secrets.PASSWORD }}
